@@ -1291,8 +1291,8 @@ function vtkOpenGLTexture(publicAPI, model) {
 
   function processDataArray(dataArray, preferSizeOverAccuracy) {
     const numComps = dataArray.getNumberOfComponents();
-    const dataType = dataArray.getDataType();
-    const data = dataArray.getData();
+    let dataType = dataArray.getDataType();
+    let data = dataArray.getData();
 
     // Compute min max from array
     // Using the vtkDataArray.getRange() enables caching
@@ -1319,6 +1319,11 @@ function vtkOpenGLTexture(publicAPI, model) {
     // we need to use another type
     if (!model.useHalfFloat) {
       publicAPI.getOpenGLDataType(dataType, true);
+    }
+
+    if (dataType === VtkDataTypes.FLOAT && !!model.oglNorm16Ext && !model.context.getExtension('OES_texture_float_linear') && !minArray.some(x => x < -32767) && !maxArray.some(x => x > 32767)) {
+      data = new Int16Array(data);
+      dataType = VtkDataTypes.SHORT;
     }
 
     return {
